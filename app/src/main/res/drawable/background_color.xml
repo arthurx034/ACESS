@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+
+    <!-- Gradiente da barra -->
+    <gradient
+        android:startColor="#0B2D59"
+        android:centerColor="@color/primaryBlue"
+        android:endColor="#1C1C1D"
+       android:angle="60"/>
+
+</shape>

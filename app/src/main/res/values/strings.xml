@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Uber2.0</string>
+    <string name="sms">
+        Ao continuar, você concorda em receber chamada e mensagens
+        Info normal <font color='#A8D7A8'>SMS/RCS ou pelo WhatsApp, inclusive automáticas, da Acess e de suas afiliadas, no número informado.</font></string>
+    <string name="google_logo" />
+    <string name="default_web_client_id">SEU_CLIENT_ID_DO_FIREBASE.apps.googleusercontent.com</string>
+</resources>

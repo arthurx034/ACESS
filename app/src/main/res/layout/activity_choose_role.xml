@@ -1,0 +1,38 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="24dp"
+    android:background="@color/primaryBlue">
+
+    <TextView
+        android:id="@+id/text_choose_role"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Escolha seu papel"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:textColor="@android:color/white"
+        android:layout_marginBottom="32dp" />
+
+    <Button
+        android:id="@+id/btn_passenger"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Sou Passageiro"
+        android:layout_marginBottom="16dp"
+        android:backgroundTint="@android:color/holo_blue_light"
+        android:textColor="@android:color/white"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/btn_driver"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Sou Motorista"
+        android:backgroundTint="@android:color/holo_green_dark"
+        android:textColor="@android:color/white"
+        android:textStyle="bold" />
+
+</LinearLayout>

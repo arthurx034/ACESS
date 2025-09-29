@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "811647812455",
+    "project_id": "acess-697fe",
+    "storage_bucket": "acess-697fe.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:811647812455:android:b35e104102c2b3561225c2",
+        "android_client_info": {
+          "package_name": "com.alana"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "811647812455-09as1o01kb0le60ndg7880pktpsjfkam.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.alana",
+            "certificate_hash": "a08e185fa8d7dc0b3e2c6c4fe321a61363477472"
+          }
+        },
+        {
+          "client_id": "811647812455-bie4ilaknl681kmbf7qtve294565e711.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB77JtCHaG4s1iwQDz9GPImFaXubyr0_jM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "811647812455-bie4ilaknl681kmbf7qtve294565e711.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
