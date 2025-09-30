@@ -5,4 +5,5 @@
         Info normal <font color='#A8D7A8'>SMS/RCS ou pelo WhatsApp, inclusive automáticas, da Acess e de suas afiliadas, no número informado.</font></string>
     <string name="google_logo" />
     <string name="default_web_client_id">SEU_CLIENT_ID_DO_FIREBASE.apps.googleusercontent.com</string>
+    <string name="register">Ao continuar, você concorda em receber chamada e mensagens SMS/RCS ou pelo WhatsApp, inclusive automáticas, da Acess e de suas afiliadas, no número informado.</string>
 </resources>

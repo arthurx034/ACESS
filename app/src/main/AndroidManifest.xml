@@ -36,6 +36,7 @@
         <activity android:name=".PassengerActivity" />
         <activity android:name=".DriverActivity" />
         <activity android:name=".ChooseRoleActivity" />
+        <activity android:name=".RegisterActivity" />
 
     </application>
 </manifest>

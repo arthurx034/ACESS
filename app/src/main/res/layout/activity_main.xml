@@ -11,13 +11,5 @@
         android:layout_height="match_parent"/>
 
     <!-- Botão para chamar veículo -->
-    <Button
-        android:id="@+id/btn_call_ride"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Chamar Veículo Adaptado"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:layout_margin="16dp"/>
 
 </RelativeLayout>
