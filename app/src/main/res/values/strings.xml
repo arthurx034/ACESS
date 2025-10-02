@@ -6,4 +6,12 @@
     <string name="google_logo" />
     <string name="default_web_client_id">SEU_CLIENT_ID_DO_FIREBASE.apps.googleusercontent.com</string>
     <string name="register">Ao continuar, você concorda em receber chamada e mensagens SMS/RCS ou pelo WhatsApp, inclusive automáticas, da Acess e de suas afiliadas, no número informado.</string>
+    <string name="back" />
+    <string name="chegou_o_acess_nmais_do_que_um_app_de_transporte_uma_ponte_para_inclus_o_autonomia_ne_respeito_nfa_a_parte_de_um_movimento_que_conecta_pessoas_com_nempatia_e_acessibilidade_ncom_o_acess_todo_mundo_vai_mais_longe">Chegou o ACESS! \nMais do que um app de transporte, é uma ponte para inclusão, autonomia \ne respeito. \nFaça parte de um movimento que conecta pessoas com \nempatia e acessibilidade. \nCom o ACESS, todo mundo vai mais longe.</string>
+    <string name="acess">Acess</string>
+    <string name="fazer_login">Fazer Login</string>
+    <string name="cadastre_se">Cadastre-se</string>
+    <string name="dirija_pelo_app_do_acess_voc_vai_estar_ajudando_as_pessoas_que_precisam_de_voc">Dirija pelo app do Acess. Você vai estar ajudando as pessoas que precisam de você.</string>
+    <string name="dirija_pelo_app_do_acess_e_aumente_seus_ganhos">Dirija pelo app do Acess e aumente seus ganhos</string>
+    <string name="todo">TODO</string>
 </resources>

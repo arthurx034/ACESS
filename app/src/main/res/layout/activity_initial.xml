@@ -1,38 +1,154 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
+    android:background="@color/primaryBlue"
+    android:fitsSystemWindows="true"
     android:gravity="center"
-    android:padding="24dp"
-    android:background="@color/primaryBlue">
+    android:orientation="vertical">
 
     <TextView
-        android:id="@+id/cadastro_login"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Escolha seu papel"
-        android:textSize="22sp"
-        android:textStyle="bold"
+        android:layout_gravity="start"
+        android:fontFamily="@font/open_sans"
+        android:padding="13dp"
+        android:text="@string/acess"
         android:textColor="@android:color/white"
-        android:layout_marginBottom="32dp" />
+        android:textSize="28sp" />
 
-    <Button
-        android:id="@+id/btn_cadastro"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Cadastre-se"
-        android:layout_marginBottom="16dp"
-        android:backgroundTint="@android:color/holo_blue_light"
-        android:textColor="@android:color/white"
-        android:textStyle="bold" />
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="12dp">
 
-    <Button
-        android:id="@+id/btn_login"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Fazer Login"
-        android:backgroundTint="@android:color/holo_green_dark"
-        android:textColor="@android:color/white"
-        android:textStyle="bold" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:fontFamily="@font/open_sans"
+            android:text="@string/dirija_pelo_app_do_acess_e_aumente_seus_ganhos"
+            android:textColor="@android:color/white"
+            android:textSize="34sp"
+            android:textStyle="bold"/>
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="32dp"
+            android:text="@string/dirija_pelo_app_do_acess_voc_vai_estar_ajudando_as_pessoas_que_precisam_de_voc"
+            android:textColor="@android:color/white"
+            android:textSize="18sp" />
+
+        <LinearLayout
+            android:id="@+id/btn_cadastro"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/button_style_google"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:orientation="horizontal"
+            android:padding="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="start"
+                android:fontFamily="@font/open_sans"
+                android:text="@string/cadastre_se"
+                android:textColor="@color/black"
+                android:textSize="34sp"
+                android:textStyle="bold"/>
+
+            <ImageView
+                android:layout_width="60dp"
+                android:layout_height="50dp"
+                android:layout_gravity="center_vertical|end"
+                android:layout_marginStart="95dp"
+                android:layout_marginTop="3dp"
+                android:src="@drawable/seta" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/btn_login"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/button_style_google"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:orientation="horizontal"
+            android:padding="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="start"
+                android:fontFamily="@font/open_sans"
+                android:text="@string/fazer_login"
+                android:textColor="@color/black"
+                android:textSize="34sp"
+                android:textStyle="bold"/>
+
+            <ImageView
+                android:layout_width="60dp"
+                android:layout_height="50dp"
+                android:layout_gravity="center_vertical|end"
+                android:layout_marginStart="100dp"
+                android:layout_marginTop="3dp"
+                android:src="@drawable/seta" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start"
+            android:layout_marginTop="20dp"
+            android:fontFamily="@font/open_sans"
+            android:text="@string/acess"
+            android:textColor="@android:color/white"
+            android:textSize="28sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start"
+            android:fontFamily="sans-serif-thin"
+            android:text="@string/chegou_o_acess_nmais_do_que_um_app_de_transporte_uma_ponte_para_inclus_o_autonomia_ne_respeito_nfa_a_parte_de_um_movimento_que_conecta_pessoas_com_nempatia_e_acessibilidade_ncom_o_acess_todo_mundo_vai_mais_longe"
+            android:textColor="@android:color/white"
+            android:textSize="11.9sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="25dp"
+            android:layout_marginEnd="105dp"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="40dp"
+                android:background="@drawable/insta_icon"
+                android:contentDescription="@string/todo" />
+
+            <ImageButton
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="40dp"
+                android:background="@drawable/mail_icon"
+                android:contentDescription="@string/todo" />
+
+            <ImageButton
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:background="@drawable/whats_icon"
+                android:contentDescription="@string/todo" />
+        </LinearLayout>
+    </LinearLayout>
 </LinearLayout>

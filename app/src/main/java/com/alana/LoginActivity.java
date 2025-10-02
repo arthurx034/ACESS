@@ -6,6 +6,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
@@ -26,13 +27,17 @@ public class LoginActivity extends AppCompatActivity {
     private static final int RC_SIGN_IN = 100;
     private GoogleSignInClient googleSignInClient;
     private FirebaseAuth firebaseAuth;
-
     private String role;
+    private ImageButton btnBack;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+
+        // Botão de voltar
+        btnBack = findViewById(R.id.btn_back);
+        btnBack.setOnClickListener(v -> onBackPressed());
 
         // Papel do usuário (passenger ou driver)
         role = getIntent().getStringExtra("role");

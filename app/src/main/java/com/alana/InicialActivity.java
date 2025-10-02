@@ -3,12 +3,13 @@ package com.alana;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
+import android.widget.LinearLayout;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 public class InicialActivity extends AppCompatActivity {
 
-    Button btn_login, btn_cadastro;
+    LinearLayout btn_login, btn_cadastro;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

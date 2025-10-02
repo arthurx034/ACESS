@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -19,6 +20,8 @@ public class RegisterActivity extends AppCompatActivity {
     private LinearLayout btnGoogle, btnSearch;
     private TextView textRegister, textInfoSms;
     private ImageView imageView;
+    private TextView text_have_account;
+    private ImageButton btnBack;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +37,7 @@ public class RegisterActivity extends AppCompatActivity {
         textRegister = findViewById(R.id.text_register);
         textInfoSms = findViewById(R.id.text_info_sms);
         imageView = findViewById(R.id.imageView);
+        btnBack = findViewById(R.id.btn_back);
 
         // Ação do botão "Continuar"
         btnContinue.setOnClickListener(v -> {
@@ -58,5 +62,8 @@ public class RegisterActivity extends AppCompatActivity {
         btnSearch.setOnClickListener(v ->
                 Toast.makeText(this, "Recuperar conta (simulado)", Toast.LENGTH_SHORT).show()
         );
+
+        // Ação do botão "Voltar"
+        btnBack.setOnClickListener(v -> onBackPressed());
     }
 }

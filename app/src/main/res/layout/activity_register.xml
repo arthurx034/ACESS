@@ -4,9 +4,24 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/primaryBlue"
-    android:gravity="center"
     android:orientation="vertical"
-    android:padding="24dp">
+    android:fitsSystemWindows="true">
+
+    <ImageButton
+        android:id="@+id/btn_back"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_gravity="start"
+        android:background="@android:color/transparent"
+        android:contentDescription="@string/back"
+        android:src="@drawable/return_button" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="20dp">
 
     <TextView
         android:id="@+id/text_register"
@@ -36,36 +51,7 @@
         android:inputType="textPassword"
         android:padding="12dp" />
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginTop="13dp">
-
-        <View
-            android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:layout_weight="1"
-            android:background="@color/white"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="OU"
-            android:textColor="@color/white"
-            android:paddingStart="8dp"
-            android:paddingEnd="8dp"/>
-
-        <View
-            android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:layout_weight="1"
-            android:background="@color/white"/>
-
-    </LinearLayout>
-
-    <Button
+        <Button
         android:id="@+id/btn_continue"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -135,12 +121,11 @@
     <LinearLayout
         android:id="@+id/btn_search"
         android:layout_width="209dp"
-        android:layout_height="wrap_content"
+        android:layout_height="40dp"
         android:layout_marginTop="8dp"
         android:orientation="horizontal"
         android:gravity="center"
         android:background="@drawable/button_style_search"
-        android:padding="12dp"
         android:clickable="true"
         android:focusable="true"
         android:foreground="?attr/selectableItemBackground">
@@ -171,9 +156,11 @@
 
     <ImageView
         android:id="@+id/imageView"
-        android:layout_width="230dp"
-        android:layout_height="185dp"
-        android:layout_marginBottom="20dp"
+        android:layout_width="wrap_content"
+        android:layout_height="175dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="10dp"
         app:srcCompat="@drawable/img" />
 
+    </LinearLayout>
 </LinearLayout>

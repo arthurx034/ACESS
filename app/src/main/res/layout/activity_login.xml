@@ -5,14 +5,28 @@
     android:background="@color/primaryBlue"
     android:gravity="center"
     android:orientation="vertical"
-    android:padding="24dp">
+    android:fitsSystemWindows="true">
+
+    <ImageButton
+        android:id="@+id/btn_back"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_gravity="start"
+        android:background="@android:color/transparent"
+        android:contentDescription="@string/back"
+        android:src="@drawable/return_button" />
 
     <ImageView
         android:id="@+id/imageView"
         android:layout_width="match_parent"
-        android:layout_height="287dp"
-        android:layout_marginBottom="20dp"
+        android:layout_height="230dp"
         app:srcCompat="@drawable/img" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="24dp">
 
     <EditText
         android:id="@+id/edt_email"
@@ -92,4 +106,5 @@
         android:textAlignment="center"
         android:textColor="@color/white" />
 
+    </LinearLayout>
 </LinearLayout>

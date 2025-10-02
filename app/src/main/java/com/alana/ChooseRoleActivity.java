@@ -23,7 +23,7 @@ public class ChooseRoleActivity extends AppCompatActivity {
      * Abre a LoginActivity passando o papel do usuário
      */
     private void navigateToLogin(String role) {
-        Intent intent = new Intent(this, LoginActivity.class);
+        Intent intent = new Intent(this, RegisterActivity.class);
         intent.putExtra("role", role);
         startActivity(intent);
         finish(); // opcional: fecha a tela de escolha para não voltar

@@ -18,7 +18,7 @@ public class SplashActivity extends AppCompatActivity {
 
         // Delay antes de abrir a próxima Activity
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            Intent intent = new Intent(SplashActivity.this, ChooseRoleActivity.class);
+            Intent intent = new Intent(SplashActivity.this, InicialActivity.class);
             startActivity(intent);
             finish(); // fecha a splash para não voltar com o botão "Voltar"
         }, SPLASH_DELAY);
