@@ -1,9 +1,11 @@
-package com.alana;
+package com.alana.view;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.alana.R;
 
 public class ChooseRoleActivity extends AppCompatActivity {
 

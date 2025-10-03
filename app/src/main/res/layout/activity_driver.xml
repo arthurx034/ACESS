@@ -1,17 +1,19 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:padding="16dp"
-    android:gravity="center"
+    android:gravity="center_horizontal"
     android:background="@color/primaryBlue"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <TextView
-        android:text="Nova solicitação de corrida!"
-        android:textSize="20sp"
-        android:layout_marginBottom="20dp"
+        android:text="Solicitações de Corrida"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:textColor="@android:color/white"
+        android:layout_marginBottom="16dp"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content" />
 
     <!-- Lista de solicitações -->
     <ListView
@@ -20,11 +22,16 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:divider="@android:color/darker_gray"
-        android:dividerHeight="1dp"/>
+        android:dividerHeight="1dp"
+        android:background="@android:color/white" />
 
     <Button
         android:id="@+id/btn_accept_ride"
         android:text="Aceitar Corrida"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:backgroundTint="@android:color/holo_green_dark"
+        android:textColor="@android:color/white"
+        android:layout_marginTop="12dp" />
+
 </LinearLayout>

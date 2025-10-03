@@ -38,6 +38,7 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:34.3.0"))
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.android.gms:play-services-auth:20.7.0")
+    implementation("com.google.firebase:firebase-firestore:25.0.0")
 
     // UI
     implementation("com.google.android.material:material:1.9.0")
@@ -48,6 +49,8 @@ dependencies {
     implementation("com.google.android.material:material:1.11.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.google.code.gson:gson:2.10.1")
+    implementation(libs.room.common.jvm)
+    implementation(libs.room.runtime.android)
 
     // Testes
     testImplementation("junit:junit:4.13.2")
