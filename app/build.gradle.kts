@@ -39,6 +39,11 @@ dependencies {
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.android.gms:play-services-auth:20.7.0")
     implementation("com.google.firebase:firebase-firestore:25.0.0")
+    // OSMDroid (mapa OSM)
+    implementation("org.osmdroid:osmdroid-android:6.1.16")
+
+    // Networking (se já tiver, não precisa repetir)
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
     // UI
     implementation("com.google.android.material:material:1.9.0")

@@ -36,10 +36,10 @@ public class RideAdapter extends ArrayAdapter<Ride> {
         TextView tvTempo = convertView.findViewById(R.id.tvTempo);
 
         if (ride != null) {
-            tvDestino.setText("Destino: " + ride.destino);
-            tvPreco.setText("Preço: R$ " + ride.preco);
-            tvDistancia.setText("Distância: " + ride.distancia + " km");
-            tvTempo.setText("Tempo: " + ride.tempo + " min");
+            tvDestino.setText("Destino: " + ride.getDestino());
+            tvPreco.setText("Preço: R$ " + ride.getPreco());
+            tvDistancia.setText("Distância: " + ride.getDistancia() + " km");
+            tvTempo.setText("Tempo: " + ride.getTempo() + " min");
         }
 
         return convertView;

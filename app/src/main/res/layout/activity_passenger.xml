@@ -4,14 +4,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- Mapa -->
-    <fragment
+    <org.osmdroid.views.MapView
         android:id="@+id/map"
-        android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <!-- Bottom Sheet com informações da corrida -->
     <LinearLayout
         android:id="@+id/bottomSheet"
         android:layout_width="match_parent"
@@ -33,34 +30,25 @@
             android:id="@+id/tvDistancia"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Distância: 3.2 km"
-            android:textSize="14sp" />
+            android:text="Distância: -" />
 
         <TextView
             android:id="@+id/tvTempo"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Tempo estimado: 10 min"
-            android:textSize="14sp" />
+            android:text="Tempo estimado: -" />
 
         <TextView
             android:id="@+id/tvPreco"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Preço estimado: R$ 18,50"
-            android:textSize="16sp"
-            android:textColor="@android:color/holo_green_dark"
-            android:paddingTop="8dp" />
+            android:text="Preço estimado: -" />
 
         <Button
             android:id="@+id/btnSolicitar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Solicitar Corrida"
-            android:layout_marginTop="16dp"
-            android:backgroundTint="@color/purple_500"
-            android:textColor="@android:color/white" />
-
+            android:text="Solicitar Corrida" />
     </LinearLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

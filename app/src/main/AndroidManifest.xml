@@ -3,15 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.alana">
 
-    <!-- Configuração do Google Play Services -->
-    <meta-data
-        android:name="com.google.android.gms.version"
-        android:value="@integer/google_play_services_version" />
-
-    <!-- Permissões -->
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application
         android:allowBackup="true"
@@ -21,23 +15,31 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
 
+        <!-- ✅ sua chave deve estar AQUI dentro -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyCFLyeGAC_A8FidI1PUUUum-1TtsBhlyw8" />
+
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
+
         <activity android:name=".view.SplashActivity"
             android:exported="true"
             tools:ignore="Instantiatable">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
         <activity android:name=".view.MainActivity" />
-
         <activity android:name=".view.LoginActivity" />
         <activity android:name=".view.PassengerActivity" />
         <activity android:name=".view.DriverActivity" />
         <activity android:name=".view.ChooseRoleActivity" />
         <activity android:name=".view.RegisterActivity" />
-        <activity android:name=".view.InicialActivity"/>
+        <activity android:name=".view.InicialActivity" />
 
     </application>
 </manifest>
