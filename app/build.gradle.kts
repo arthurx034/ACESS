@@ -56,6 +56,8 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10.1")
     implementation(libs.room.common.jvm)
     implementation(libs.room.runtime.android)
+    implementation("org.mindrot:jbcrypt:0.4")
+
 
     // Testes
     testImplementation("junit:junit:4.13.2")

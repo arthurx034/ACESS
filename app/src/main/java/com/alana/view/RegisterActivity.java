@@ -3,8 +3,8 @@ package com.alana.view;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
-import android.text.TextWatcher;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
@@ -80,6 +80,9 @@ public class RegisterActivity extends AppCompatActivity {
         btnVoltar.setOnClickListener(v -> onBackPressed());
     }
 
+    // ------------------------------------------------------
+    // 🔹 Lógica principal de registro (email ou telefone)
+    // ------------------------------------------------------
     private void registrarUsuario() {
         String entrada = edtEntrada.getText().toString().trim();
         String senha = edtSenha.getText().toString().trim();
@@ -108,40 +111,66 @@ public class RegisterActivity extends AppCompatActivity {
             // Registro via telefone com verificação SMS
             String telefone = normalizarTelefone(entrada);
 
-            PhoneAuthOptions options =
-                    PhoneAuthOptions.newBuilder(firebaseAuth)
-                            .setPhoneNumber(telefone)
-                            .setTimeout(60L, TimeUnit.SECONDS)
-                            .setActivity(this)
-                            .setCallbacks(new PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
-                                @Override
-                                public void onVerificationCompleted(@NonNull PhoneAuthCredential credential) {
-                                    // Auto verificação
-                                    signInWithPhoneAuthCredential(credential, telefone);
-                                }
-
-                                @Override
-                                public void onVerificationFailed(@NonNull FirebaseException e) {
-                                    Toast.makeText(RegisterActivity.this, "Falha na verificação: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                                }
-
-                                @Override
-                                public void onCodeSent(@NonNull String verificationId,
-                                                       @NonNull PhoneAuthProvider.ForceResendingToken token) {
-                                    verifId = verificationId;
-                                    // Aqui você precisa abrir uma tela para o usuário inserir o código SMS
-                                    Toast.makeText(RegisterActivity.this, "Código enviado para " + telefone, Toast.LENGTH_SHORT).show();
-                                    // Exemplo: startActivity(new Intent(this, VerifyCodeActivity.class).putExtra("telefone", telefone));
-                                }
-                            }).build();
-            PhoneAuthProvider.verifyPhoneNumber(options);
+            // 🔍 Verifica se o telefone já existe antes de enviar SMS
+            db.collection("users")
+                    .whereEqualTo("contato", telefone)
+                    .get()
+                    .addOnSuccessListener(querySnapshot -> {
+                        if (!querySnapshot.isEmpty()) {
+                            // Já existe usuário com esse telefone
+                            Toast.makeText(this, "Esse número já está cadastrado.", Toast.LENGTH_LONG).show();
+                        } else {
+                            // 🔥 Se não existe, inicia o processo de verificação SMS
+                            iniciarVerificacaoTelefone(telefone);
+                        }
+                    })
+                    .addOnFailureListener(e ->
+                            Toast.makeText(this, "Erro ao verificar telefone: " + e.getMessage(), Toast.LENGTH_SHORT).show());
 
         } else {
             Toast.makeText(this, "Email ou telefone inválido", Toast.LENGTH_LONG).show();
         }
     }
 
-    // Função para fazer login com telefone após SMS
+    // ------------------------------------------------------
+    // 🔹 Inicia o processo de verificação por SMS
+    // ------------------------------------------------------
+    private void iniciarVerificacaoTelefone(String telefone) {
+        PhoneAuthOptions options =
+                PhoneAuthOptions.newBuilder(firebaseAuth)
+                        .setPhoneNumber(telefone)
+                        .setTimeout(60L, TimeUnit.SECONDS)
+                        .setActivity(this)
+                        .setCallbacks(new PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
+                            @Override
+                            public void onVerificationCompleted(@NonNull PhoneAuthCredential credential) {
+                                // Auto verificação (sem precisar digitar código)
+                                signInWithPhoneAuthCredential(credential, telefone);
+                            }
+
+                            @Override
+                            public void onVerificationFailed(@NonNull FirebaseException e) {
+                                Toast.makeText(RegisterActivity.this, "Falha na verificação: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                            }
+
+                            @Override
+                            public void onCodeSent(@NonNull String verificationId,
+                                                   @NonNull PhoneAuthProvider.ForceResendingToken token) {
+                                verifId = verificationId;
+                                Intent intent = new Intent(RegisterActivity.this, VerifyCodeActivity.class);
+                                intent.putExtra("verificationId", verificationId);
+                                intent.putExtra("telefone", telefone);
+                                startActivity(intent);
+                            }
+                        })
+                        .build();
+
+        PhoneAuthProvider.verifyPhoneNumber(options);
+    }
+
+    // ------------------------------------------------------
+    // 🔹 Faz login com o telefone após receber o código SMS
+    // ------------------------------------------------------
     private void signInWithPhoneAuthCredential(PhoneAuthCredential credential, String telefone) {
         firebaseAuth.signInWithCredential(credential)
                 .addOnCompleteListener(task -> {
@@ -157,6 +186,9 @@ public class RegisterActivity extends AppCompatActivity {
                 });
     }
 
+    // ------------------------------------------------------
+    // 🔹 Normaliza o telefone (ex: (34)99999-1234 → +5534999991234)
+    // ------------------------------------------------------
     private String normalizarTelefone(String raw) {
         String digitos = raw.replaceAll("[^\\d]", "");
         if (digitos.length() == 10 || digitos.length() == 11) {
@@ -167,6 +199,9 @@ public class RegisterActivity extends AppCompatActivity {
         return raw;
     }
 
+    // ------------------------------------------------------
+    // 🔹 Validações
+    // ------------------------------------------------------
     private boolean validarEmail(String email) {
         return email != null && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches();
     }
@@ -177,6 +212,9 @@ public class RegisterActivity extends AppCompatActivity {
         return (digitos.length() == 10 || digitos.length() == 11 || (telefone.startsWith("+") && digitos.length() >= 8));
     }
 
+    // ------------------------------------------------------
+    // 🔹 Salva usuário no Firestore
+    // ------------------------------------------------------
     private void salvarUsuarioNoFirestore(String userId, String contato, String role) {
         Map<String, Object> usuario = new HashMap<>();
         usuario.put("contato", contato);
@@ -184,10 +222,14 @@ public class RegisterActivity extends AppCompatActivity {
         usuario.put("criadoEm", FieldValue.serverTimestamp());
 
         db.collection("users").document(userId).set(usuario)
-                .addOnSuccessListener(aVoid -> Log.d(TAG, "Usuário salvo"))
-                .addOnFailureListener(e -> Toast.makeText(this, "Erro ao salvar no banco: " + e.getMessage(), Toast.LENGTH_LONG).show());
+                .addOnSuccessListener(aVoid -> Log.d(TAG, "Usuário salvo com sucesso"))
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Erro ao salvar no banco: " + e.getMessage(), Toast.LENGTH_LONG).show());
     }
 
+    // ------------------------------------------------------
+    // 🔹 Login com Google
+    // ------------------------------------------------------
     private void entrarComGoogle() {
         Intent signInIntent = googleSignInClient.getSignInIntent();
         startActivityForResult(signInIntent, RC_SIGN_IN);
@@ -224,16 +266,22 @@ public class RegisterActivity extends AppCompatActivity {
                             irParaProximaTela();
                         }
                     } else {
-                        Toast.makeText(this, "Erro ao autenticar Google!", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Erro ao autenticar com Google!", Toast.LENGTH_SHORT).show();
                     }
                 });
     }
 
+    // ------------------------------------------------------
+    // 🔹 Vai para a próxima tela (PassengerActivity)
+    // ------------------------------------------------------
     private void irParaProximaTela() {
         startActivity(new Intent(this, PassengerActivity.class));
         finish();
     }
 
+    // ------------------------------------------------------
+    // 🔹 Máscara automática para telefone
+    // ------------------------------------------------------
     private void aplicarMascaraTelefone(final EditText editText) {
         editText.addTextChangedListener(new TextWatcher() {
             boolean isAtualizando = false;

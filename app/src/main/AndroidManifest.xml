@@ -15,7 +15,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
 
-        <!-- ✅ sua chave deve estar AQUI dentro -->
+        <!-- 🔹 Chave da API do Google Maps -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyCFLyeGAC_A8FidI1PUUUum-1TtsBhlyw8" />
@@ -24,7 +24,9 @@
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
 
-        <activity android:name=".view.SplashActivity"
+        <!-- Tela inicial -->
+        <activity
+            android:name=".view.SplashActivity"
             android:exported="true"
             tools:ignore="Instantiatable">
             <intent-filter>
@@ -40,6 +42,12 @@
         <activity android:name=".view.ChooseRoleActivity" />
         <activity android:name=".view.RegisterActivity" />
         <activity android:name=".view.InicialActivity" />
+
+        <!-- ✅ Adicione esta activity de verificação de SMS -->
+        <activity
+            android:name=".view.VerifyCodeActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
 
     </application>
 </manifest>
