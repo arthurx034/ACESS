@@ -1,22 +1,223 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:map="http://schemas.android.com/apk/res-auto"
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@drawable/background_color"
+    android:fillViewport="true">
 
-    <!-- Fragmento do Google Maps -->
-    <fragment
-        android:id="@+id/map"
-        android:name="com.google.android.gms.maps.SupportMapFragment"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
-
-    <!-- Botão para chamar veículo -->
-    <Button
-        android:id="@+id/btn_call_ride"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Chamar Veículo"
-        android:layout_alignParentBottom="true"
-        android:layout_margin="16dp" />
+        android:orientation="vertical"
+        android:padding="16dp">
 
-</RelativeLayout>
+        <!-- Título -->
+        <TextView
+            android:id="@+id/tvTitulo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Acess"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            android:paddingBottom="12dp" />
+
+        <!-- Campo de busca -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:background="@drawable/bg_input"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="8dp">
+
+            <ImageView
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@drawable/search2" />
+
+            <EditText
+                android:id="@+id/etDestino"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:hint="Informe seu destino"
+                android:textColorHint="#CCC"
+                android:textColor="@android:color/white"
+                android:background="@android:color/transparent"
+                android:paddingHorizontal="8dp" />
+
+            <Button
+                android:id="@+id/btnMaisTarde"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Mais tarde"
+                android:backgroundTint="#142E88"
+                android:textColor="@android:color/white"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- Locais recentes -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingTop="12dp">
+
+            <Button
+                android:id="@+id/btnAACD"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="AACD\nR. da Doméstica, 250 - Planalto"
+                android:background="@drawable/bg_button"
+                android:textAlignment="textStart"
+                android:padding="8dp"
+                android:textColor="@android:color/white" />
+
+            <Button
+                android:id="@+id/btnCasa"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Casa\nRua. Malaquias Miguel da Silva, 60 - Luziote"
+                android:background="@drawable/bg_button"
+                android:textAlignment="textStart"
+                android:padding="8dp"
+                android:textColor="@android:color/white"
+                android:layout_marginTop="8dp" />
+        </LinearLayout>
+
+        <!-- Sugestões -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Sugestões"
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            android:textSize="18sp"
+            android:paddingTop="20dp"
+            android:paddingBottom="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:weightSum="3"
+            android:gravity="center">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <ImageView
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:src="@drawable/ic_calendar" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <ImageView
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:src="@drawable/ic_car" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <ImageView
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:src="@drawable/ic_box" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Mercado -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Mercado"
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            android:textSize="18sp"
+            android:paddingTop="20dp"
+            android:paddingBottom="8dp" />
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="200dp"
+                    android:layout_height="120dp"
+                    android:src="@drawable/img_mercado1"
+                    android:layout_marginEnd="8dp" />
+
+                <ImageView
+                    android:layout_width="200dp"
+                    android:layout_height="120dp"
+                    android:src="@drawable/img_mercado2" />
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <!-- Redes -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Redes de contatos"
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            android:textSize="18sp"
+            android:paddingTop="20dp"
+            android:paddingBottom="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#143470"
+            android:padding="12dp"
+            android:layout_marginBottom="80dp"
+            android:clipToOutline="true"
+            android:radius="8dp">
+
+            <TextView
+                android:text="Instagram"
+                android:textColor="@android:color/white"
+                android:textStyle="bold" />
+
+            <TextView
+                android:text="@Acess_app"
+                android:textColor="#D0E1FF"
+                android:paddingBottom="4dp" />
+
+            <TextView
+                android:text="Email"
+                android:textColor="@android:color/white"
+                android:textStyle="bold" />
+
+            <TextView
+                android:text="Acess.aplicativo@gmail.com"
+                android:textColor="#D0E1FF" />
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

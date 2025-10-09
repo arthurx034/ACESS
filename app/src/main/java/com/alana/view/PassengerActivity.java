@@ -38,7 +38,8 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-public class PassengerActivity extends FragmentActivity {
+public class
+PassengerActivity extends FragmentActivity {
 
     private MapView map;
     private TextView tvDestino, tvDistancia, tvTempo, tvPreco;

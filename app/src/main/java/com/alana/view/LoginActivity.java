@@ -16,6 +16,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.alana.R;
+import com.alana.util.SenhaUtil;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -28,8 +29,8 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 public class LoginActivity extends AppCompatActivity {
 
-    private static final String TAG = "LoginActivity";
     private static final int RC_SIGN_IN = 100;
+    private static final String TAG = "LoginActivity";
 
     private EditText edtEntrada, edtSenha;
     private Button btnLogin;
@@ -39,7 +40,6 @@ public class LoginActivity extends AppCompatActivity {
     private FirebaseAuth firebaseAuth;
     private FirebaseFirestore db;
     private GoogleSignInClient googleSignInClient;
-
     private String role;
 
     @Override
@@ -47,21 +47,18 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        // Inicialização
         firebaseAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
 
         role = getIntent().getStringExtra("role");
-        if (role == null) role = "passenger";
+        if (role == null) role = "passageiro";
 
-        // Google Sign-In
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
                 .build();
         googleSignInClient = GoogleSignIn.getClient(this, gso);
 
-        // UI
         edtEntrada = findViewById(R.id.edt_email);
         edtSenha = findViewById(R.id.edt_password);
         btnLogin = findViewById(R.id.btn_continue);
@@ -72,59 +69,68 @@ public class LoginActivity extends AppCompatActivity {
 
         btnVoltar.setOnClickListener(v -> onBackPressed());
         btnLogin.setOnClickListener(v -> realizarLogin());
-        btnGoogle.setOnClickListener(v -> signInWithGoogle());
+        btnGoogle.setOnClickListener(v -> loginComGoogle());
     }
 
-    // ------------------------------------------------------
-    // 🔹 Login principal (email + senha ou telefone + senha)
-    // ------------------------------------------------------
     private void realizarLogin() {
         String entrada = edtEntrada.getText().toString().trim();
         String senha = edtSenha.getText().toString().trim();
 
         if (TextUtils.isEmpty(entrada) || TextUtils.isEmpty(senha)) {
-            Toast.makeText(this, "Preencha todos os campos!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Por favor, preencha todos os campos!", Toast.LENGTH_SHORT).show();
             return;
         }
 
         if (validarEmail(entrada)) {
-            // Login com email
-            firebaseAuth.signInWithEmailAndPassword(entrada, senha)
-                    .addOnCompleteListener(task -> {
-                        if (task.isSuccessful()) {
-                            Toast.makeText(this, "Login com email realizado!", Toast.LENGTH_SHORT).show();
-                            irParaProximaTela();
-                        } else {
-                            Toast.makeText(this, "Erro: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
-                        }
-                    });
+            loginComEmail(entrada, senha);
         } else if (validarTelefone(entrada)) {
-            // Login com telefone (sem SMS)
-            String telefone = normalizarTelefone(entrada);
-
-            db.collection("users")
-                    .whereEqualTo("contato", telefone)
-                    .get()
-                    .addOnSuccessListener(querySnapshot -> {
-                        if (!querySnapshot.isEmpty()) {
-                            // Telefone existe → login aceito
-                            Toast.makeText(this, "Login com telefone realizado!", Toast.LENGTH_SHORT).show();
-                            irParaProximaTela();
-                        } else {
-                            Toast.makeText(this, "Número não encontrado. Cadastre-se primeiro.", Toast.LENGTH_LONG).show();
-                        }
-                    })
-                    .addOnFailureListener(e ->
-                            Toast.makeText(this, "Erro ao buscar telefone: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+            loginComTelefone(entrada, senha);
         } else {
-            Toast.makeText(this, "Formato inválido! Digite um email ou telefone válido.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Digite um e-mail ou telefone válido!", Toast.LENGTH_LONG).show();
         }
     }
 
-    // ------------------------------------------------------
-    // 🔹 Login com Google
-    // ------------------------------------------------------
-    private void signInWithGoogle() {
+    private void loginComEmail(String email, String senha) {
+        firebaseAuth.signInWithEmailAndPassword(email, senha)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        irParaProximaTela();
+                    } else {
+                        Toast.makeText(this, "Erro ao fazer login: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
+                    }
+                });
+    }
+
+    private void loginComTelefone(String telefoneInput, String senhaDigitada) {
+        String telefoneNormalizado = normalizarTelefone(telefoneInput);
+
+        db.collection("users")
+                .whereEqualTo("contato", telefoneNormalizado)
+                .limit(1)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    if (!querySnapshot.isEmpty()) {
+                        String senhaHash = querySnapshot.getDocuments().get(0).getString("senha");
+
+                        if (senhaHash != null) {
+                            if (SenhaUtil.checkPassword(senhaDigitada, senhaHash)) {
+                                irParaProximaTela();
+                            } else {
+                                Toast.makeText(this, "Senha incorreta!", Toast.LENGTH_LONG).show();
+                            }
+                        } else {
+                            Toast.makeText(this, "Conta registrada via telefone. Use o login por SMS.", Toast.LENGTH_LONG).show();
+                        }
+
+                    } else {
+                        Toast.makeText(this, "Número não encontrado. Cadastre-se primeiro.", Toast.LENGTH_LONG).show();
+                    }
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Erro ao buscar telefone: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+    }
+
+    private void loginComGoogle() {
         Intent signInIntent = googleSignInClient.getSignInIntent();
         startActivityForResult(signInIntent, RC_SIGN_IN);
     }
@@ -132,31 +138,25 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
         if (requestCode == RC_SIGN_IN) {
             try {
                 GoogleSignInAccount account = GoogleSignIn.getSignedInAccountFromIntent(data)
                         .getResult(ApiException.class);
-
                 if (account != null) {
-                    firebaseAuthWithGoogle(account.getIdToken());
-                } else {
-                    Toast.makeText(this, "Falha ao obter conta Google", Toast.LENGTH_SHORT).show();
+                    autenticarFirebaseComGoogle(account.getIdToken());
                 }
-
             } catch (ApiException e) {
-                Log.e("GoogleLogin", "Erro: ", e);
-                Toast.makeText(this, "Login Google falhou: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "Erro ao autenticar Google: ", e);
+                Toast.makeText(this, "Falha ao autenticar com Google.", Toast.LENGTH_SHORT).show();
             }
         }
     }
 
-    private void firebaseAuthWithGoogle(String idToken) {
+    private void autenticarFirebaseComGoogle(String idToken) {
         AuthCredential credential = GoogleAuthProvider.getCredential(idToken, null);
         firebaseAuth.signInWithCredential(credential)
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
-                        Toast.makeText(this, "Login Google realizado!", Toast.LENGTH_SHORT).show();
                         irParaProximaTela();
                     } else {
                         Toast.makeText(this, "Erro ao autenticar com Firebase!", Toast.LENGTH_SHORT).show();
@@ -164,9 +164,6 @@ public class LoginActivity extends AppCompatActivity {
                 });
     }
 
-    // ------------------------------------------------------
-    // 🔹 Utilitários
-    // ------------------------------------------------------
     private boolean validarEmail(String email) {
         return email != null && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches();
     }
@@ -174,34 +171,27 @@ public class LoginActivity extends AppCompatActivity {
     private boolean validarTelefone(String telefone) {
         if (telefone == null) return false;
         String digitos = telefone.replaceAll("[^\\d]", "");
-        return (digitos.length() == 10 || digitos.length() == 11 || (telefone.startsWith("+") && digitos.length() >= 8));
+        return (digitos.length() >= 8 && digitos.length() <= 13);
     }
 
     private String normalizarTelefone(String raw) {
         String digitos = raw.replaceAll("[^\\d]", "");
-        if (digitos.length() == 10 || digitos.length() == 11) {
-            return "+55" + digitos;
-        } else if (raw.startsWith("+")) {
-            return "+" + digitos;
-        }
-        return raw;
+        if (digitos.length() == 10 || digitos.length() == 11) return "+55" + digitos;
+        else if (digitos.startsWith("55")) return "+" + digitos;
+        else return "+" + digitos;
     }
 
     private void irParaProximaTela() {
-        Intent intent = "passenger".equalsIgnoreCase(role)
+        Intent intent = role.equalsIgnoreCase("passageiro")
                 ? new Intent(this, PassengerActivity.class)
                 : new Intent(this, DriverActivity.class);
         startActivity(intent);
         finish();
     }
 
-    // ------------------------------------------------------
-    // 🔹 Máscara automática para telefone
-    // ------------------------------------------------------
     private void aplicarMascaraTelefone(final EditText editText) {
         editText.addTextChangedListener(new TextWatcher() {
             boolean isAtualizando = false;
-
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void afterTextChanged(Editable s) {}
             @Override

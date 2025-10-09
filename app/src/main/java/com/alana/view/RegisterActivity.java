@@ -17,6 +17,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.alana.R;
+import com.alana.util.SenhaUtil;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -51,7 +52,7 @@ public class RegisterActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private GoogleSignInClient googleSignInClient;
 
-    private String verifId; // para Phone Auth
+    private String verifId; // para autenticação por telefone
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,25 +82,26 @@ public class RegisterActivity extends AppCompatActivity {
     }
 
     // ------------------------------------------------------
-    // 🔹 Lógica principal de registro (email ou telefone)
+    // 🔹 Registro principal (e-mail ou telefone)
     // ------------------------------------------------------
     private void registrarUsuario() {
         String entrada = edtEntrada.getText().toString().trim();
         String senha = edtSenha.getText().toString().trim();
 
         if (TextUtils.isEmpty(entrada) || TextUtils.isEmpty(senha)) {
-            Toast.makeText(this, "Preencha todos os campos", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Por favor, preencha todos os campos", Toast.LENGTH_SHORT).show();
             return;
         }
 
         if (validarEmail(entrada)) {
-            // Registro via email
+            String hashedPassword = SenhaUtil.hashPassword(senha);
+
             firebaseAuth.createUserWithEmailAndPassword(entrada, senha)
                     .addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
                             FirebaseUser user = firebaseAuth.getCurrentUser();
                             if (user != null) {
-                                salvarUsuarioNoFirestore(user.getUid(), entrada, "passenger");
+                                salvarUsuarioNoFirestore(user.getUid(), entrada, hashedPassword, "passageiro");
                                 irParaProximaTela();
                             }
                         } else {
@@ -108,32 +110,41 @@ public class RegisterActivity extends AppCompatActivity {
                     });
 
         } else if (validarTelefone(entrada)) {
-            // Registro via telefone com verificação SMS
             String telefone = normalizarTelefone(entrada);
 
-            // 🔍 Verifica se o telefone já existe antes de enviar SMS
             db.collection("users")
                     .whereEqualTo("contato", telefone)
                     .get()
                     .addOnSuccessListener(querySnapshot -> {
                         if (!querySnapshot.isEmpty()) {
-                            // Já existe usuário com esse telefone
-                            Toast.makeText(this, "Esse número já está cadastrado.", Toast.LENGTH_LONG).show();
+                            Toast.makeText(this, "Este número já está cadastrado.", Toast.LENGTH_LONG).show();
                         } else {
-                            // 🔥 Se não existe, inicia o processo de verificação SMS
-                            iniciarVerificacaoTelefone(telefone);
+                            String hashedPassword = SenhaUtil.hashPassword(senha);
+
+                            Map<String, Object> usuario = new HashMap<>();
+                            usuario.put("contato", telefone);
+                            usuario.put("senha", hashedPassword);
+                            usuario.put("role", "passageiro");
+                            usuario.put("criadoEm", FieldValue.serverTimestamp());
+
+                            db.collection("users").document(telefone)
+                                    .set(usuario)
+                                    .addOnSuccessListener(aVoid -> iniciarVerificacaoTelefone(telefone))
+                                    .addOnFailureListener(e ->
+                                            Toast.makeText(RegisterActivity.this, "Erro ao salvar usuário: " + e.getMessage(), Toast.LENGTH_LONG).show()
+                                    );
                         }
                     })
                     .addOnFailureListener(e ->
                             Toast.makeText(this, "Erro ao verificar telefone: " + e.getMessage(), Toast.LENGTH_SHORT).show());
 
         } else {
-            Toast.makeText(this, "Email ou telefone inválido", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "E-mail ou telefone inválido", Toast.LENGTH_LONG).show();
         }
     }
 
     // ------------------------------------------------------
-    // 🔹 Inicia o processo de verificação por SMS
+    // 🔹 Verificação de SMS
     // ------------------------------------------------------
     private void iniciarVerificacaoTelefone(String telefone) {
         PhoneAuthOptions options =
@@ -144,7 +155,6 @@ public class RegisterActivity extends AppCompatActivity {
                         .setCallbacks(new PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
                             @Override
                             public void onVerificationCompleted(@NonNull PhoneAuthCredential credential) {
-                                // Auto verificação (sem precisar digitar código)
                                 signInWithPhoneAuthCredential(credential, telefone);
                             }
 
@@ -168,16 +178,13 @@ public class RegisterActivity extends AppCompatActivity {
         PhoneAuthProvider.verifyPhoneNumber(options);
     }
 
-    // ------------------------------------------------------
-    // 🔹 Faz login com o telefone após receber o código SMS
-    // ------------------------------------------------------
     private void signInWithPhoneAuthCredential(PhoneAuthCredential credential, String telefone) {
         firebaseAuth.signInWithCredential(credential)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         FirebaseUser user = task.getResult().getUser();
                         if (user != null) {
-                            salvarUsuarioNoFirestore(user.getUid(), telefone, "passenger");
+                            salvarUsuarioNoFirestore(user.getUid(), telefone, null, "passageiro");
                             irParaProximaTela();
                         }
                     } else {
@@ -186,22 +193,13 @@ public class RegisterActivity extends AppCompatActivity {
                 });
     }
 
-    // ------------------------------------------------------
-    // 🔹 Normaliza o telefone (ex: (34)99999-1234 → +5534999991234)
-    // ------------------------------------------------------
     private String normalizarTelefone(String raw) {
         String digitos = raw.replaceAll("[^\\d]", "");
-        if (digitos.length() == 10 || digitos.length() == 11) {
-            return "+55" + digitos;
-        } else if (raw.startsWith("+")) {
-            return "+" + digitos;
-        }
+        if (digitos.length() == 10 || digitos.length() == 11) return "+55" + digitos;
+        else if (raw.startsWith("+")) return "+" + digitos;
         return raw;
     }
 
-    // ------------------------------------------------------
-    // 🔹 Validações
-    // ------------------------------------------------------
     private boolean validarEmail(String email) {
         return email != null && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches();
     }
@@ -212,14 +210,13 @@ public class RegisterActivity extends AppCompatActivity {
         return (digitos.length() == 10 || digitos.length() == 11 || (telefone.startsWith("+") && digitos.length() >= 8));
     }
 
-    // ------------------------------------------------------
-    // 🔹 Salva usuário no Firestore
-    // ------------------------------------------------------
-    private void salvarUsuarioNoFirestore(String userId, String contato, String role) {
+    private void salvarUsuarioNoFirestore(String userId, String contato, String senhaHash, String role) {
         Map<String, Object> usuario = new HashMap<>();
         usuario.put("contato", contato);
         usuario.put("role", role);
         usuario.put("criadoEm", FieldValue.serverTimestamp());
+
+        if (senhaHash != null) usuario.put("senha", senhaHash);
 
         db.collection("users").document(userId).set(usuario)
                 .addOnSuccessListener(aVoid -> Log.d(TAG, "Usuário salvo com sucesso"))
@@ -227,9 +224,6 @@ public class RegisterActivity extends AppCompatActivity {
                         Toast.makeText(this, "Erro ao salvar no banco: " + e.getMessage(), Toast.LENGTH_LONG).show());
     }
 
-    // ------------------------------------------------------
-    // 🔹 Login com Google
-    // ------------------------------------------------------
     private void entrarComGoogle() {
         Intent signInIntent = googleSignInClient.getSignInIntent();
         startActivityForResult(signInIntent, RC_SIGN_IN);
@@ -262,7 +256,7 @@ public class RegisterActivity extends AppCompatActivity {
                     if (task.isSuccessful()) {
                         FirebaseUser user = firebaseAuth.getCurrentUser();
                         if (user != null) {
-                            salvarUsuarioNoFirestore(user.getUid(), user.getEmail(), "passenger");
+                            salvarUsuarioNoFirestore(user.getUid(), user.getEmail(), null, "passageiro");
                             irParaProximaTela();
                         }
                     } else {
@@ -271,23 +265,21 @@ public class RegisterActivity extends AppCompatActivity {
                 });
     }
 
-    // ------------------------------------------------------
-    // 🔹 Vai para a próxima tela (PassengerActivity)
-    // ------------------------------------------------------
     private void irParaProximaTela() {
         startActivity(new Intent(this, PassengerActivity.class));
         finish();
     }
 
-    // ------------------------------------------------------
-    // 🔹 Máscara automática para telefone
-    // ------------------------------------------------------
     private void aplicarMascaraTelefone(final EditText editText) {
         editText.addTextChangedListener(new TextWatcher() {
             boolean isAtualizando = false;
 
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void afterTextChanged(Editable s) {}
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+
+            @Override
+            public void afterTextChanged(Editable s) { }
+
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 if (isAtualizando) return;
@@ -298,8 +290,10 @@ public class RegisterActivity extends AppCompatActivity {
                 String formatado;
                 if (digitos.length() == 0) formatado = "";
                 else if (digitos.length() <= 2) formatado = "(" + digitos;
-                else if (digitos.length() <= 6) formatado = "(" + digitos.substring(0, 2) + ") " + digitos.substring(2);
-                else if (digitos.length() <= 10) formatado = "(" + digitos.substring(0, 2) + ") " + digitos.substring(2, digitos.length() - 4) + "-" + digitos.substring(digitos.length() - 4);
+                else if (digitos.length() <= 6)
+                    formatado = "(" + digitos.substring(0, 2) + ") " + digitos.substring(2);
+                else if (digitos.length() <= 10)
+                    formatado = "(" + digitos.substring(0, 2) + ") " + digitos.substring(2, digitos.length() - 4) + "-" + digitos.substring(digitos.length() - 4);
                 else {
                     String parte1 = digitos.substring(0, 2);
                     String parte2 = digitos.substring(2, Math.min(7, digitos.length()));
