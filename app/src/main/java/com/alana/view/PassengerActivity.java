@@ -5,7 +5,6 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.widget.Button;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -15,7 +14,6 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import com.alana.R;
-import com.alana.db.Ride;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import org.json.JSONArray;
@@ -38,35 +36,40 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-public class
-PassengerActivity extends FragmentActivity {
+public class PassengerActivity extends FragmentActivity {
 
     private MapView map;
     private TextView tvDestino, tvDistancia, tvTempo, tvPreco;
     private Button btnSolicitar;
     private FirebaseFirestore firestore;
 
-    // exemplo fixo (Uberlândia)
-    private final double origemLat = -18.9185;
-    private final double origemLon = -48.2772;
-    private final double destinoLat = -18.9269;
-    private final double destinoLon = -48.2865;
+    // Pode ser alterado para pegar localização real
+    private double origemLat = -18.9185;
+    private double origemLon = -48.2772;
+
+    private double destinoLat;
+    private double destinoLon;
+    private String destinoNome;
 
     private double lastPreco = 0;
     private double lastDistanciaKm = 0;
     private int lastTempoMin = 0;
 
     private ActivityResultLauncher<String> requestLocationPermission;
+    private OkHttpClient client;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // osmdroid config: user agent + prefs
-        Configuration.getInstance().load(getApplicationContext(), PreferenceManager.getDefaultSharedPreferences(this));
+
+        // osmdroid config
+        Configuration.getInstance().load(getApplicationContext(),
+                PreferenceManager.getDefaultSharedPreferences(this));
         Configuration.getInstance().setUserAgentValue(getPackageName());
 
         setContentView(R.layout.activity_passenger);
 
+        // Inicialização UI
         map = findViewById(R.id.map);
         tvDestino = findViewById(R.id.tvDestino);
         tvDistancia = findViewById(R.id.tvDistancia);
@@ -74,25 +77,28 @@ PassengerActivity extends FragmentActivity {
         tvPreco = findViewById(R.id.tvPreco);
         btnSolicitar = findViewById(R.id.btnSolicitar);
         firestore = FirebaseFirestore.getInstance();
+        client = new OkHttpClient();
 
-        // setup map
+        // Recebendo dados da MainActivity (Nominatim)
+        destinoNome = getIntent().getStringExtra("destinoNome");
+        destinoLat = getIntent().getDoubleExtra("destinoLat", -18.9269);
+        destinoLon = getIntent().getDoubleExtra("destinoLon", -48.2865);
+
+        tvDestino.setText("Destino: " + destinoNome);
+
+        // Setup mapa
         map.setTileSource(TileSourceFactory.MAPNIK);
         map.setMultiTouchControls(true);
         map.getController().setZoom(15.0);
         map.getController().setCenter(new GeoPoint(origemLat, origemLon));
 
-        // marcadores iniciais
         addMarker(origemLat, origemLon, "Você");
-        addMarker(destinoLat, destinoLon, "Destino");
+        addMarker(destinoLat, destinoLon, destinoNome);
 
-        tvDestino.setText("Destino: Shopping Uberlândia");
-
-        // Permissão runtime (location)
+        // Permissão runtime
         requestLocationPermission = registerForActivityResult(
                 new ActivityResultContracts.RequestPermission(),
-                granted -> {
-                    // apenas continuar (mapa já funciona sem localização)
-                }
+                granted -> { /* mapa funciona mesmo sem localização */ }
         );
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -100,16 +106,17 @@ PassengerActivity extends FragmentActivity {
             requestLocationPermission.launch(Manifest.permission.ACCESS_FINE_LOCATION);
         }
 
-        // já calcular rota na abertura
+        // Calcular rota
         calcularRotaECalcularPreco(origemLat, origemLon, destinoLat, destinoLon);
 
+        // Solicitar corrida
         btnSolicitar.setOnClickListener(v -> {
             if (lastPreco <= 0) {
                 Toast.makeText(this, "Aguardando cálculo da rota...", Toast.LENGTH_SHORT).show();
                 return;
             }
             btnSolicitar.setEnabled(false);
-            salvarCorridaNoFirestore("Shopping Uberlândia", lastPreco, lastDistanciaKm, lastTempoMin);
+            salvarCorridaNoFirestore(destinoNome, lastPreco, lastDistanciaKm, lastTempoMin);
         });
     }
 
@@ -123,21 +130,23 @@ PassengerActivity extends FragmentActivity {
     }
 
     private void calcularRotaECalcularPreco(double oLat, double oLon, double dLat, double dLon) {
-        // OSRM exige lon,lat na URL
         String url = "https://router.project-osrm.org/route/v1/driving/"
                 + oLon + "," + oLat + ";" + dLon + "," + dLat
                 + "?overview=full&geometries=polyline";
 
-        OkHttpClient client = new OkHttpClient();
         Request request = new Request.Builder().url(url).build();
-
         client.newCall(request).enqueue(new Callback() {
-            @Override public void onFailure(Call call, IOException e) {
-                runOnUiThread(() -> Toast.makeText(PassengerActivity.this, "Erro ao buscar rota (OSRM)", Toast.LENGTH_SHORT).show());
+            @Override
+            public void onFailure(Call call, IOException e) {
+                runOnUiThread(() -> Toast.makeText(PassengerActivity.this,
+                        "Erro ao buscar rota (OSRM)", Toast.LENGTH_SHORT).show());
             }
-            @Override public void onResponse(Call call, Response response) throws IOException {
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
                 if (!response.isSuccessful() || response.body() == null) {
-                    runOnUiThread(() -> Toast.makeText(PassengerActivity.this, "Resposta inválida do OSRM", Toast.LENGTH_SHORT).show());
+                    runOnUiThread(() -> Toast.makeText(PassengerActivity.this,
+                            "Resposta inválida do OSRM", Toast.LENGTH_SHORT).show());
                     return;
                 }
                 try {
@@ -145,26 +154,25 @@ PassengerActivity extends FragmentActivity {
                     JSONObject json = new JSONObject(body);
                     JSONArray routes = json.getJSONArray("routes");
                     if (routes.length() == 0) {
-                        runOnUiThread(() -> Toast.makeText(PassengerActivity.this, "Nenhuma rota encontrada", Toast.LENGTH_SHORT).show());
+                        runOnUiThread(() -> Toast.makeText(PassengerActivity.this,
+                                "Nenhuma rota encontrada", Toast.LENGTH_SHORT).show());
                         return;
                     }
                     JSONObject route = routes.getJSONObject(0);
-                    double distanceMeters = route.getDouble("distance"); // em metros
-                    double durationSeconds = route.getDouble("duration"); // em segundos
-                    String geometry = route.getString("geometry"); // polyline encoded
+                    double distanceMeters = route.getDouble("distance");
+                    double durationSeconds = route.getDouble("duration");
+                    String geometry = route.getString("geometry");
 
                     List<GeoPoint> points = decodePolylineToGeoPoints(geometry);
 
                     double km = distanceMeters / 1000.0;
-                    int minutos = (int)Math.round(durationSeconds / 60.0);
+                    int minutos = (int) Math.round(durationSeconds / 60.0);
                     double preco = calcularPrecoExemplo(km, minutos);
 
-                    // atualizar UI
                     runOnUiThread(() -> {
-                        // remover overlays antigos (exceto marcadores iniciais se quiser)
                         map.getOverlays().clear();
                         addMarker(oLat, oLon, "Você");
-                        addMarker(dLat, dLon, "Destino");
+                        addMarker(dLat, dLon, destinoNome);
 
                         Polyline line = new Polyline();
                         line.setPoints(points);
@@ -183,13 +191,13 @@ PassengerActivity extends FragmentActivity {
 
                 } catch (Exception e) {
                     e.printStackTrace();
-                    runOnUiThread(() -> Toast.makeText(PassengerActivity.this, "Erro ao processar rota", Toast.LENGTH_SHORT).show());
+                    runOnUiThread(() -> Toast.makeText(PassengerActivity.this,
+                            "Erro ao processar rota", Toast.LENGTH_SHORT).show());
                 }
             }
         });
     }
 
-    // Decodifica polyline (formato Google/OSRM, precision=5)
     private List<GeoPoint> decodePolylineToGeoPoints(String encoded) {
         List<GeoPoint> poly = new ArrayList<>();
         int index = 0, len = encoded.length();
@@ -238,11 +246,13 @@ PassengerActivity extends FragmentActivity {
         firestore.collection("rides")
                 .add(map)
                 .addOnSuccessListener(docRef -> runOnUiThread(() -> {
-                    Toast.makeText(PassengerActivity.this, "Corrida solicitada (id: " + docRef.getId() + ")", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(PassengerActivity.this,
+                            "Corrida solicitada (id: " + docRef.getId() + ")", Toast.LENGTH_SHORT).show();
                     btnSolicitar.setEnabled(true);
                 }))
                 .addOnFailureListener(e -> runOnUiThread(() -> {
-                    Toast.makeText(PassengerActivity.this, "Erro ao salvar corrida", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(PassengerActivity.this,
+                            "Erro ao salvar corrida", Toast.LENGTH_SHORT).show();
                     btnSolicitar.setEnabled(true);
                 }));
     }

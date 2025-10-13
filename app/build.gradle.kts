@@ -59,6 +59,8 @@ dependencies {
     implementation("org.mindrot:jbcrypt:0.4")
     implementation("com.github.bumptech.glide:glide:4.16.0")
     annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
+    implementation("com.squareup.okhttp3:okhttp:4.11.0")
+    implementation("com.google.android.material:material:1.9.0")
 
     // Testes
     testImplementation("junit:junit:4.13.2")
