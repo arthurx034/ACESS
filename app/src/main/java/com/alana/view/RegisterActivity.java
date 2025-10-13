@@ -266,7 +266,7 @@ public class RegisterActivity extends AppCompatActivity {
     }
 
     private void irParaProximaTela() {
-        startActivity(new Intent(this, PassengerActivity.class));
+        startActivity(new Intent(this, MainActivity.class));
         finish();
     }
 

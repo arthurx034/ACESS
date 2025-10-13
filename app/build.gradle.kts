@@ -57,7 +57,8 @@ dependencies {
     implementation(libs.room.common.jvm)
     implementation(libs.room.runtime.android)
     implementation("org.mindrot:jbcrypt:0.4")
-
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
 
     // Testes
     testImplementation("junit:junit:4.13.2")

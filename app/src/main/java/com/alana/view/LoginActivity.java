@@ -183,7 +183,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private void irParaProximaTela() {
         Intent intent = role.equalsIgnoreCase("passageiro")
-                ? new Intent(this, PassengerActivity.class)
+                ? new Intent(this, MainActivity.class)
                 : new Intent(this, DriverActivity.class);
         startActivity(intent);
         finish();

@@ -17,19 +17,19 @@
             android:id="@+id/tvTitulo"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:paddingBottom="12dp"
             android:text="Acess"
-            android:textSize="28sp"
-            android:textStyle="bold"
             android:textColor="@android:color/white"
-            android:paddingBottom="12dp" />
+            android:textSize="28sp"
+            android:textStyle="bold" />
 
         <!-- Campo de busca -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:orientation="horizontal"
             android:background="@drawable/bg_input"
             android:gravity="center_vertical"
+            android:orientation="horizontal"
             android:paddingHorizontal="8dp">
 
             <ImageView
@@ -42,18 +42,18 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:hint="Informe seu destino"
-                android:textColorHint="#CCC"
-                android:textColor="@android:color/white"
                 android:background="@android:color/transparent"
-                android:paddingHorizontal="8dp" />
+                android:hint="Informe seu destino"
+                android:paddingHorizontal="8dp"
+                android:textColor="@android:color/white"
+                android:textColorHint="#CCC" />
 
             <Button
                 android:id="@+id/btnMaisTarde"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Mais tarde"
                 android:backgroundTint="#142E88"
+                android:text="Mais tarde"
                 android:textColor="@android:color/white"
                 android:textSize="12sp" />
         </LinearLayout>
@@ -69,48 +69,48 @@
                 android:id="@+id/btnAACD"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="AACD\nR. da Doméstica, 250 - Planalto"
                 android:background="@drawable/bg_button"
-                android:textAlignment="textStart"
                 android:padding="8dp"
+                android:text="AACD\nR. da Doméstica, 250 - Planalto"
+                android:textAlignment="textStart"
                 android:textColor="@android:color/white" />
 
             <Button
                 android:id="@+id/btnCasa"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Casa\nRua. Malaquias Miguel da Silva, 60 - Luziote"
+                android:layout_marginTop="8dp"
                 android:background="@drawable/bg_button"
-                android:textAlignment="textStart"
                 android:padding="8dp"
-                android:textColor="@android:color/white"
-                android:layout_marginTop="8dp" />
+                android:text="Casa\nRua. Malaquias Miguel da Silva, 60 - Luziote"
+                android:textAlignment="textStart"
+                android:textColor="@android:color/white" />
         </LinearLayout>
 
         <!-- Sugestões -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:paddingTop="20dp"
+            android:paddingBottom="8dp"
             android:text="Sugestões"
-            android:textStyle="bold"
             android:textColor="@android:color/white"
             android:textSize="18sp"
-            android:paddingTop="20dp"
-            android:paddingBottom="8dp" />
+            android:textStyle="bold" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:gravity="center"
             android:orientation="horizontal"
-            android:weightSum="3"
-            android:gravity="center">
+            android:weightSum="3">
 
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center">
+                android:gravity="center"
+                android:orientation="vertical">
 
                 <ImageView
                     android:layout_width="60dp"
@@ -122,8 +122,8 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center">
+                android:gravity="center"
+                android:orientation="vertical">
 
                 <ImageView
                     android:layout_width="60dp"
@@ -135,8 +135,8 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center">
+                android:gravity="center"
+                android:orientation="vertical">
 
                 <ImageView
                     android:layout_width="60dp"
@@ -149,15 +149,15 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:paddingTop="20dp"
+            android:paddingBottom="8dp"
             android:text="Mercado"
-            android:textStyle="bold"
             android:textColor="@android:color/white"
             android:textSize="18sp"
-            android:paddingTop="20dp"
-            android:paddingBottom="8dp" />
+            android:textStyle="bold" />
 
         <HorizontalScrollView
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content">
 
             <LinearLayout
@@ -165,16 +165,45 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
 
-                <ImageView
-                    android:layout_width="200dp"
-                    android:layout_height="120dp"
-                    android:src="@drawable/img_mercado1"
-                    android:layout_marginEnd="8dp" />
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
 
-                <ImageView
-                    android:layout_width="200dp"
-                    android:layout_height="120dp"
-                    android:src="@drawable/img_mercado2" />
+                    <ImageView
+                        android:layout_width="177dp"
+                        android:layout_height="120dp"
+                        android:layout_gravity="center"
+                        android:layout_marginEnd="8dp"
+                        android:src="@drawable/img_mercado1" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_marginEnd="8dp"
+                        android:text="www.magazineluiza.com.br"
+                        android:textColor="@color/white" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <ImageView
+                        android:layout_width="180dp"
+                        android:layout_height="120dp"
+                        android:src="@drawable/img_mercado2" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="start"
+                        android:text="www.espacoquallys.com.br"
+                        android:textColor="@color/white" />
+                </LinearLayout>
             </LinearLayout>
         </HorizontalScrollView>
 
@@ -182,42 +211,110 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:paddingTop="20dp"
+            android:paddingBottom="8dp"
             android:text="Redes de contatos"
-            android:textStyle="bold"
             android:textColor="@android:color/white"
             android:textSize="18sp"
-            android:paddingTop="20dp"
-            android:paddingBottom="8dp" />
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="80dp"
+            android:background="@drawable/bg_rede_de_contato"
+            android:clipToOutline="true"
+            android:orientation="horizontal"
+            android:padding="12dp"
+            android:radius="8dp">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:paddingEnd="8dp">
+
+                <ImageButton
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="@android:color/transparent"
+                    android:layout_marginTop="3dp"
+                    android:src="@drawable/insta_logo2" />
+                
+                <ImageButton
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_marginTop="12dp"
+                    android:background="@android:color/transparent"
+                    android:src="@drawable/mail_logo2" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Instagram"
+                    android:textColor="@android:color/white"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingBottom="4dp"
+                    android:text="Acess_app"
+                    android:textColor="#D0E1FF" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Email"
+                    android:textColor="@android:color/white"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Acess.aplicativo@gmail.com"
+                    android:textColor="#D0E1FF" />
+            </LinearLayout>
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="#143470"
-            android:padding="12dp"
-            android:layout_marginBottom="80dp"
-            android:clipToOutline="true"
-            android:radius="8dp">
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:layout_gravity="center"
+            android:orientation="horizontal">
 
-            <TextView
-                android:text="Instagram"
-                android:textColor="@android:color/white"
-                android:textStyle="bold" />
+            <ImageButton
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:background="@android:color/transparent"
+                android:src="@drawable/logo_main"/>
+            
+            <ImageButton
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:background="@android:color/transparent"
+                android:src="@drawable/logo_options"/>
 
-            <TextView
-                android:text="@Acess_app"
-                android:textColor="#D0E1FF"
-                android:paddingBottom="4dp" />
+            <ImageButton
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:background="@android:color/transparent"
+                android:src="@drawable/logo_denuncia"/>
 
-            <TextView
-                android:text="Email"
-                android:textColor="@android:color/white"
-                android:textStyle="bold" />
+            <ImageButton
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:background="@android:color/transparent"
+                android:src="@drawable/logo_profile"/>
 
-            <TextView
-                android:text="Acess.aplicativo@gmail.com"
-                android:textColor="#D0E1FF" />
         </LinearLayout>
-
     </LinearLayout>
 </ScrollView>
