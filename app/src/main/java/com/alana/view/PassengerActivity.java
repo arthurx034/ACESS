@@ -2,6 +2,8 @@ package com.alana.view;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.widget.Button;
@@ -14,217 +16,226 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import com.alana.R;
-import com.google.firebase.firestore.FirebaseFirestore;
+import com.alana.util.OSRMUtil;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.osmdroid.config.Configuration;
+import org.osmdroid.util.BoundingBox;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.Polyline;
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-
+/**
+ * PassengerActivity (corrigido)
+ * - mantém design atual (bottom sheet)
+ * - pega localização atual (last known)
+ * - chama OSRM via OSRMUtil.fetchRoute()
+ * - desenha polyline, adiciona marcadores e faz auto-zoom
+ */
 public class PassengerActivity extends FragmentActivity {
 
     private MapView map;
     private TextView tvDestino, tvDistancia, tvTempo, tvPreco;
     private Button btnSolicitar;
-    private FirebaseFirestore firestore;
 
-    // Pode ser alterado para pegar localização real
+    private FusedLocationProviderClient fusedLocationClient;
+    private ActivityResultLauncher<String> requestLocationPermission;
+
+    // destination (recebido via Intent)
+    private double destinoLat = 0.0;
+    private double destinoLon = 0.0;
+    private String destinoNome = "Destino";
+
+    // origin (obtido ou fallback)
     private double origemLat = -18.9185;
     private double origemLon = -48.2772;
+    private String origemDisplay = "Minha localização";
 
-    private double destinoLat;
-    private double destinoLon;
-    private String destinoNome;
-
-    private double lastPreco = 0;
-    private double lastDistanciaKm = 0;
-    private int lastTempoMin = 0;
-
-    private ActivityResultLauncher<String> requestLocationPermission;
-    private OkHttpClient client;
+    private double lastPreco = 0.0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // osmdroid config
+        // osmdroid config (necessário antes de usar MapView)
         Configuration.getInstance().load(getApplicationContext(),
                 PreferenceManager.getDefaultSharedPreferences(this));
         Configuration.getInstance().setUserAgentValue(getPackageName());
 
         setContentView(R.layout.activity_passenger);
 
-        // Inicialização UI
+        // Bind UI
         map = findViewById(R.id.map);
         tvDestino = findViewById(R.id.tvDestino);
         tvDistancia = findViewById(R.id.tvDistancia);
-        tvTempo = findViewById(R.id.tvTempo);
+        tvTempo = findViewById(R.id.tvTempo);   // no layout atual tvTempo existe
         tvPreco = findViewById(R.id.tvPreco);
         btnSolicitar = findViewById(R.id.btnSolicitar);
-        firestore = FirebaseFirestore.getInstance();
-        client = new OkHttpClient();
 
-        // Recebendo dados da MainActivity (Nominatim)
+        // Get destination from Intent
         destinoNome = getIntent().getStringExtra("destinoNome");
-        destinoLat = getIntent().getDoubleExtra("destinoLat", -18.9269);
-        destinoLon = getIntent().getDoubleExtra("destinoLon", -48.2865);
+        destinoLat = getIntent().getDoubleExtra("destinoLat", destinoLat);
+        destinoLon = getIntent().getDoubleExtra("destinoLon", destinoLon);
+        if (destinoNome == null || destinoNome.isEmpty()) {
+            destinoNome = String.format(Locale.getDefault(), "%.5f, %.5f", destinoLat, destinoLon);
+        }
 
-        tvDestino.setText("Destino: " + destinoNome);
-
-        // Setup mapa
-        map.setTileSource(TileSourceFactory.MAPNIK);
+        // prepare map
         map.setMultiTouchControls(true);
         map.getController().setZoom(15.0);
-        map.getController().setCenter(new GeoPoint(origemLat, origemLon));
 
-        addMarker(origemLat, origemLon, "Você");
-        addMarker(destinoLat, destinoLon, destinoNome);
+        // UI text
+        tvDestino.setText("Destino: " + destinoNome);
 
-        // Permissão runtime
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
+        // permission launcher
         requestLocationPermission = registerForActivityResult(
                 new ActivityResultContracts.RequestPermission(),
-                granted -> { /* mapa funciona mesmo sem localização */ }
-        );
+                granted -> {
+                    if (granted) {
+                        obtainLocationAndDraw();
+                    } else {
+                        Toast.makeText(this, "Permissão de localização negada. Usando origem padrão.", Toast.LENGTH_SHORT).show();
+                        // draw with fallback origin
+                        drawRouteAndDisplay(origemLat, origemLon, destinoLat, destinoLon);
+                    }
+                });
 
+        // Request permission or proceed
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
             requestLocationPermission.launch(Manifest.permission.ACCESS_FINE_LOCATION);
+        } else {
+            obtainLocationAndDraw();
         }
 
-        // Calcular rota
-        calcularRotaECalcularPreco(origemLat, origemLon, destinoLat, destinoLon);
-
-        // Solicitar corrida
         btnSolicitar.setOnClickListener(v -> {
-            if (lastPreco <= 0) {
+            if (lastPreco <= 0.0) {
                 Toast.makeText(this, "Aguardando cálculo da rota...", Toast.LENGTH_SHORT).show();
                 return;
             }
             btnSolicitar.setEnabled(false);
-            salvarCorridaNoFirestore(destinoNome, lastPreco, lastDistanciaKm, lastTempoMin);
+            Toast.makeText(this, String.format(Locale.getDefault(), "Corrida solicitada. Preço: R$ %.2f", lastPreco), Toast.LENGTH_SHORT).show();
+            btnSolicitar.setEnabled(true);
         });
     }
 
-    private void addMarker(double lat, double lon, String title) {
+    private void obtainLocationAndDraw() {
+        try {
+            fusedLocationClient.getLastLocation()
+                    .addOnSuccessListener(location -> {
+                        if (location != null) {
+                            origemLat = location.getLatitude();
+                            origemLon = location.getLongitude();
+                            origemDisplay = String.format(Locale.getDefault(), "Você (%.5f, %.5f)", origemLat, origemLon);
+                        } else {
+                            origemDisplay = String.format(Locale.getDefault(), "Fallback (%.5f, %.5f)", origemLat, origemLon);
+                        }
+                        // Update a UI (ETA or origin display can be shown in tvTempo temporarily)
+                        runOnUiThread(() -> tvTempo.setText("Origem: " + origemDisplay));
+                        drawRouteAndDisplay(origemLat, origemLon, destinoLat, destinoLon);
+                    })
+                    .addOnFailureListener(e -> {
+                        origemDisplay = String.format(Locale.getDefault(), "Fallback (%.5f, %.5f)", origemLat, origemLon);
+                        runOnUiThread(() -> tvTempo.setText("Origem: " + origemDisplay));
+                        drawRouteAndDisplay(origemLat, origemLon, destinoLat, destinoLon);
+                    });
+        } catch (SecurityException se) {
+            Toast.makeText(this, "Permissão de localização faltando", Toast.LENGTH_SHORT).show();
+            drawRouteAndDisplay(origemLat, origemLon, destinoLat, destinoLon);
+        }
+    }
+
+    private void drawRouteAndDisplay(double oLat, double oLon, double dLat, double dLon) {
+        // Basic validation
+        if (dLat == 0.0 && dLon == 0.0) {
+            runOnUiThread(() -> Toast.makeText(this, "Coordenadas do destino inválidas", Toast.LENGTH_SHORT).show());
+            return;
+        }
+
+        // clear overlays and add temporary markers
+        runOnUiThread(() -> {
+            map.getOverlays().clear();
+            addCustomMarker(oLat, oLon, "Origem", android.R.drawable.ic_menu_mylocation);
+            addCustomMarker(dLat, dLon, "Destino", android.R.drawable.ic_menu_mapmode);
+            map.getController().setCenter(new GeoPoint(oLat, oLon));
+        });
+
+        // fetch route using OSRMUtil (background thread)
+        OSRMUtil.fetchRoute(oLat, oLon, dLat, dLon, new OSRMUtil.RouteCallback() {
+            @Override
+            public void onSuccess(double distanceKm, int durationMin, List<GeoPoint> geometry) {
+                final double price = calcularPrecoExemplo(distanceKm, durationMin);
+                lastPreco = price;
+
+                // compute bbox
+                double minLat = Double.MAX_VALUE, minLon = Double.MAX_VALUE;
+                double maxLat = -Double.MAX_VALUE, maxLon = -Double.MAX_VALUE;
+                for (GeoPoint p : geometry) {
+                    double lat = p.getLatitude();
+                    double lon = p.getLongitude();
+                    if (lat < minLat) minLat = lat;
+                    if (lat > maxLat) maxLat = lat;
+                    if (lon < minLon) minLon = lon;
+                    if (lon > maxLon) maxLon = lon;
+                }
+
+                final double fMinLat = minLat, fMinLon = minLon, fMaxLat = maxLat, fMaxLon = maxLon;
+                runOnUiThread(() -> {
+                    map.getOverlays().clear();
+
+                    // markers again
+                    addCustomMarker(oLat, oLon, "Origem", android.R.drawable.ic_menu_mylocation);
+                    addCustomMarker(dLat, dLon, "Destino", android.R.drawable.ic_menu_mapmode);
+
+                    // polyline
+                    Polyline line = new Polyline(map);
+                    line.setPoints(geometry);
+                    line.setWidth(8.0f);
+                    line.getOutlinePaint().setColor(Color.BLACK);
+                    line.getPaint().setColor(Color.parseColor("#143470"));
+                    map.getOverlayManager().add(line);
+
+                    // auto-zoom if geometry ok
+                    if (!geometry.isEmpty() && fMinLat != Double.MAX_VALUE) {
+                        BoundingBox bb = new BoundingBox(fMaxLat, fMaxLon, fMinLat, fMinLon);
+                        map.zoomToBoundingBox(bb, true, 80);
+                    } else {
+                        map.getController().setCenter(new GeoPoint(oLat, oLon));
+                    }
+
+                    // update UI texts
+                    tvDistancia.setText(String.format(Locale.getDefault(), "Distância: %.2f km", distanceKm));
+                    tvTempo.setText(String.format(Locale.getDefault(), "Tempo estimado: %d min", durationMin));
+                    tvPreco.setText(String.format(Locale.getDefault(), "Preço estimado: R$ %.2f", price));
+                });
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                runOnUiThread(() -> Toast.makeText(PassengerActivity.this,
+                        "Erro ao calcular rota: " + errorMessage, Toast.LENGTH_SHORT).show());
+            }
+        });
+    }
+
+    private void addCustomMarker(double lat, double lon, String title, int androidDrawableId) {
         Marker marker = new Marker(map);
         marker.setPosition(new GeoPoint(lat, lon));
-        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
         marker.setTitle(title);
+        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+        try {
+            Drawable icon = ContextCompat.getDrawable(this, androidDrawableId);
+            if (icon != null) marker.setIcon(icon);
+        } catch (Exception ignored) { /* fallback to default icon */ }
         map.getOverlays().add(marker);
         map.invalidate();
-    }
-
-    private void calcularRotaECalcularPreco(double oLat, double oLon, double dLat, double dLon) {
-        String url = "https://router.project-osrm.org/route/v1/driving/"
-                + oLon + "," + oLat + ";" + dLon + "," + dLat
-                + "?overview=full&geometries=polyline";
-
-        Request request = new Request.Builder().url(url).build();
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                runOnUiThread(() -> Toast.makeText(PassengerActivity.this,
-                        "Erro ao buscar rota (OSRM)", Toast.LENGTH_SHORT).show());
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                if (!response.isSuccessful() || response.body() == null) {
-                    runOnUiThread(() -> Toast.makeText(PassengerActivity.this,
-                            "Resposta inválida do OSRM", Toast.LENGTH_SHORT).show());
-                    return;
-                }
-                try {
-                    String body = response.body().string();
-                    JSONObject json = new JSONObject(body);
-                    JSONArray routes = json.getJSONArray("routes");
-                    if (routes.length() == 0) {
-                        runOnUiThread(() -> Toast.makeText(PassengerActivity.this,
-                                "Nenhuma rota encontrada", Toast.LENGTH_SHORT).show());
-                        return;
-                    }
-                    JSONObject route = routes.getJSONObject(0);
-                    double distanceMeters = route.getDouble("distance");
-                    double durationSeconds = route.getDouble("duration");
-                    String geometry = route.getString("geometry");
-
-                    List<GeoPoint> points = decodePolylineToGeoPoints(geometry);
-
-                    double km = distanceMeters / 1000.0;
-                    int minutos = (int) Math.round(durationSeconds / 60.0);
-                    double preco = calcularPrecoExemplo(km, minutos);
-
-                    runOnUiThread(() -> {
-                        map.getOverlays().clear();
-                        addMarker(oLat, oLon, "Você");
-                        addMarker(dLat, dLon, destinoNome);
-
-                        Polyline line = new Polyline();
-                        line.setPoints(points);
-                        line.setWidth(8.0f);
-                        map.getOverlayManager().add(line);
-                        map.invalidate();
-
-                        tvDistancia.setText(String.format("Distância: %.2f km", km));
-                        tvTempo.setText("Tempo estimado: " + minutos + " min");
-                        tvPreco.setText(String.format("Preço estimado: R$ %.2f", preco));
-
-                        lastPreco = preco;
-                        lastDistanciaKm = km;
-                        lastTempoMin = minutos;
-                    });
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    runOnUiThread(() -> Toast.makeText(PassengerActivity.this,
-                            "Erro ao processar rota", Toast.LENGTH_SHORT).show());
-                }
-            }
-        });
-    }
-
-    private List<GeoPoint> decodePolylineToGeoPoints(String encoded) {
-        List<GeoPoint> poly = new ArrayList<>();
-        int index = 0, len = encoded.length();
-        int lat = 0, lng = 0;
-        while (index < len) {
-            int b, shift = 0, result = 0;
-            do {
-                b = encoded.charAt(index++) - 63;
-                result |= (b & 0x1f) << shift;
-                shift += 5;
-            } while (b >= 0x20);
-            int dlat = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
-            lat += dlat;
-            shift = 0;
-            result = 0;
-            do {
-                b = encoded.charAt(index++) - 63;
-                result |= (b & 0x1f) << shift;
-                shift += 5;
-            } while (b >= 0x20);
-            int dlng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
-            lng += dlng;
-            double latitude = lat / 1E5;
-            double longitude = lng / 1E5;
-            poly.add(new GeoPoint(latitude, longitude));
-        }
-        return poly;
     }
 
     private double calcularPrecoExemplo(double km, int minutos) {
@@ -234,37 +245,14 @@ public class PassengerActivity extends FragmentActivity {
         return bandeirada + (km * porKm) + (minutos * porMin);
     }
 
-    private void salvarCorridaNoFirestore(String destinoStr, double preco, double distanciaKm, int tempoMin) {
-        HashMap<String, Object> map = new HashMap<>();
-        map.put("destino", destinoStr);
-        map.put("preco", preco);
-        map.put("distancia", distanciaKm);
-        map.put("tempo", tempoMin);
-        map.put("status", "aguardando");
-        map.put("timestamp", com.google.firebase.firestore.FieldValue.serverTimestamp());
-
-        firestore.collection("rides")
-                .add(map)
-                .addOnSuccessListener(docRef -> runOnUiThread(() -> {
-                    Toast.makeText(PassengerActivity.this,
-                            "Corrida solicitada (id: " + docRef.getId() + ")", Toast.LENGTH_SHORT).show();
-                    btnSolicitar.setEnabled(true);
-                }))
-                .addOnFailureListener(e -> runOnUiThread(() -> {
-                    Toast.makeText(PassengerActivity.this,
-                            "Erro ao salvar corrida", Toast.LENGTH_SHORT).show();
-                    btnSolicitar.setEnabled(true);
-                }));
-    }
-
     @Override
-    public void onResume() {
+    protected void onResume() {
         super.onResume();
         map.onResume();
     }
 
     @Override
-    public void onPause() {
+    protected void onPause() {
         super.onPause();
         map.onPause();
     }

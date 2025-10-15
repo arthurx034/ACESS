@@ -1,16 +1,16 @@
 package com.alana.view;
 
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.view.KeyEvent;
 import android.view.inputmethod.EditorInfo;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -36,187 +36,249 @@ public class MainActivity extends AppCompatActivity {
     private AutoCompleteTextView etDestino;
     private Button btnMaisTarde, btnAACD, btnCasa;
     private ImageButton btnHome, btnPerfil;
-    private ImageButton btnInsta, btnEmail;
-    private LinearLayout layoutInsta, layoutEmail;
+    private ImageButton btnInsta, btnEmail, btnWhats;
+    private ScrollView scrollConteudo;
 
     private OkHttpClient client;
-    private List<String> nomesEnderecos;
-    private List<Double> latitudes, longitudes;
+    private final List<String> nomesEnderecos = new ArrayList<>();
+    private final List<Double> latitudes = new ArrayList<>();
+    private final List<Double> longitudes = new ArrayList<>();
     private ArrayAdapter<String> adapter;
-
-    private int selectedIndex = -1; // índice do item selecionado
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        client = new OkHttpClient();
 
-        // ======= INICIALIZAÇÃO UI =======
         etDestino = findViewById(R.id.etDestino);
         btnMaisTarde = findViewById(R.id.btnMaisTarde);
         btnAACD = findViewById(R.id.btnAACD);
         btnCasa = findViewById(R.id.btnCasa);
-
         btnHome = findViewById(R.id.btn_home);
         btnPerfil = findViewById(R.id.btnPerfil);
-
         btnInsta = findViewById(R.id.imgInsta);
         btnEmail = findViewById(R.id.imgEmail);
-        layoutInsta = findViewById(R.id.layoutInsta);
-        layoutEmail = findViewById(R.id.layoutEmail);
-
-        // ======= LISTAS E CLIENTE HTTP =======
-        client = new OkHttpClient();
-        nomesEnderecos = new ArrayList<>();
-        latitudes = new ArrayList<>();
-        longitudes = new ArrayList<>();
+        // btnWhats might not be present in layout, guard against NPE
+        scrollConteudo = findViewById(R.id.scrollConteudo);
 
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, nomesEnderecos);
         etDestino.setAdapter(adapter);
-        etDestino.setThreshold(1);
+        etDestino.setThreshold(2);
 
-        // ======= SUGESTÕES ENQUANTO DIGITA =======
-        etDestino.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                selectedIndex = -1; // resetar seleção
-                if (s.length() >= 1) buscarSugestoesNominatim(s.toString());
+        etDestino.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void afterTextChanged(android.text.Editable s) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                String q = s == null ? "" : s.toString();
+                if (q.length() >= 2) buscarSugestoesNominatim(q);
             }
-            @Override
-            public void afterTextChanged(Editable s) { }
         });
 
-        // ======= CLIQUE EM SUGESTÃO =======
         etDestino.setOnItemClickListener((parent, view, position, id) -> {
-            selectedIndex = position;
-            etDestino.setText(nomesEnderecos.get(position));
-            etDestino.setSelection(etDestino.getText().length());
+            if (position >= 0 && position < nomesEnderecos.size()) {
+                abrirPassengerActivity(nomesEnderecos.get(position), latitudes.get(position), longitudes.get(position));
+            }
         });
 
-        // ======= ENTER NO TECLADO =======
         etDestino.setOnEditorActionListener((v, actionId, event) -> {
-            if (actionId == EditorInfo.IME_ACTION_DONE ||
-                    (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_DOWN)) {
-                if (selectedIndex >= 0 && selectedIndex < nomesEnderecos.size()) {
-                    abrirPassengerActivity(selectedIndex);
+            if (actionId == EditorInfo.IME_ACTION_DONE
+                    || (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_DOWN)) {
+                String text = etDestino.getText().toString().trim();
+                if (!text.isEmpty()) {
+                    buscarEnderecoEIr(text);
                 } else {
-                    Toast.makeText(this, "Selecione um destino válido", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, "Digite um endereço", Toast.LENGTH_SHORT).show();
                 }
                 return true;
             }
             return false;
         });
 
-        // ======= BOTÕES DE LOCAIS FIXOS =======
-        btnMaisTarde.setOnClickListener(v ->
-                Toast.makeText(this, "Destino será escolhido mais tarde", Toast.LENGTH_SHORT).show());
+        btnAACD.setOnClickListener(v -> buscarEnderecoEIr("R. da Doméstica, 250 - Planalto, Uberlândia - MG"));
+        btnCasa.setOnClickListener(v -> buscarEnderecoEIr("Rua Malaquias Miguel da Silva, 60 - Luizote, Uberlândia - MG"));
+        btnMaisTarde.setOnClickListener(v -> Toast.makeText(this, "Funcionalidade \"Mais tarde\" não implementada.", Toast.LENGTH_SHORT).show());
 
-        btnAACD.setOnClickListener(v -> buscarEnderecoEIr("R. da Doméstica, 250 - Planalto"));
-        btnCasa.setOnClickListener(v -> buscarEnderecoEIr("Rua. Malaquias Miguel da Silva, 60 - Luziote"));
-
-        // ======= BARRA INFERIOR =======
-        btnHome.setOnClickListener(v -> Toast.makeText(this, "Tela inicial", Toast.LENGTH_SHORT).show());
-        btnPerfil.setOnClickListener(v -> Toast.makeText(this, "Abrindo perfil", Toast.LENGTH_SHORT).show());
-
-        // ======= REDES =======
-        btnInsta.setOnClickListener(v -> Toast.makeText(this, "Abrindo Instagram", Toast.LENGTH_SHORT).show());
-        btnEmail.setOnClickListener(v -> Toast.makeText(this, "Abrindo Email", Toast.LENGTH_SHORT).show());
+        btnHome.setOnClickListener(v -> scrollConteudo.smoothScrollTo(0,0));
+        if (btnInsta != null) btnInsta.setOnClickListener(v -> openInstagramProfile("arthurx_034"));
+        if (btnEmail != null) btnEmail.setOnClickListener(v -> openEmail(
+                "arthuribeirorodrigues@gmail.com", "Contato via aplicativo", "Olá, tudo bem?"));
+        if (btnWhats != null) btnWhats.setOnClickListener(v ->
+                openWhatsApp("34999695432", "Olá! Gostaria de entrar em contato."));
     }
 
-    // ======= BUSCAR SUGESTÕES NOMINATIM =======
     private void buscarSugestoesNominatim(String query) {
         try {
-            String url = "https://nominatim.openstreetmap.org/search?q="
-                    + URLEncoder.encode(query, "UTF-8")
-                    + "&format=json&addressdetails=1&limit=5";
-
-            Request request = new Request.Builder()
+            String q = URLEncoder.encode(query, "UTF-8");
+            String url = "https://nominatim.openstreetmap.org/search?q=" + q + "&format=json&addressdetails=1&limit=6";
+            Request req = new Request.Builder()
                     .url(url)
-                    .header("User-Agent", "AcessApp/1.0 (acessapp@gmail.com)")
+                    .header("User-Agent", "AcessApp/1.0 (contact@example.com)")
                     .build();
 
-            client.newCall(request).enqueue(new Callback() {
-                @Override
-                public void onFailure(Call call, IOException e) { e.printStackTrace(); }
+            client.newCall(req).enqueue(new Callback() {
+                @Override public void onFailure(Call call, IOException e) {
+                    runOnUiThread(() -> {
+                        adapter.clear();
+                        adapter.notifyDataSetChanged();
+                    });
+                }
 
-                @Override
-                public void onResponse(Call call, Response response) throws IOException {
-                    if (!response.isSuccessful() || response.body() == null) return;
-
-                    String json = response.body().string();
+                @Override public void onResponse(Call call, Response response) throws IOException {
+                    if (!response.isSuccessful() || response.body() == null) {
+                        runOnUiThread(() -> {
+                            adapter.clear();
+                            adapter.notifyDataSetChanged();
+                        });
+                        return;
+                    }
                     try {
-                        JSONArray array = new JSONArray(json);
-                        nomesEnderecos.clear();
-                        latitudes.clear();
-                        longitudes.clear();
+                        String body = response.body().string();
+                        JSONArray arr = new JSONArray(body);
 
-                        for (int i = 0; i < array.length(); i++) {
-                            JSONObject obj = array.getJSONObject(i);
-                            nomesEnderecos.add(obj.getString("display_name"));
-                            latitudes.add(Double.parseDouble(obj.getString("lat")));
-                            longitudes.add(Double.parseDouble(obj.getString("lon")));
+                        final List<String> names = new ArrayList<>();
+                        final List<Double> lats = new ArrayList<>();
+                        final List<Double> lons = new ArrayList<>();
+
+                        for (int i = 0; i < arr.length(); i++) {
+                            JSONObject o = arr.getJSONObject(i);
+                            String display = o.optString("display_name", "");
+                            String latStr = o.optString("lat", "0");
+                            String lonStr = o.optString("lon", "0");
+                            double lat = 0.0;
+                            double lon = 0.0;
+                            try { lat = Double.parseDouble(latStr); } catch (Exception ignored) {}
+                            try { lon = Double.parseDouble(lonStr); } catch (Exception ignored) {}
+                            if (!display.isEmpty()) {
+                                names.add(display);
+                                lats.add(lat);
+                                lons.add(lon);
+                            }
                         }
 
-                        runOnUiThread(() -> adapter.notifyDataSetChanged());
+                        runOnUiThread(() -> {
+                            nomesEnderecos.clear();
+                            latitudes.clear();
+                            longitudes.clear();
+                            nomesEnderecos.addAll(names);
+                            latitudes.addAll(lats);
+                            longitudes.addAll(lons);
+                            adapter.notifyDataSetChanged();
+                            if (!nomesEnderecos.isEmpty()) etDestino.showDropDown();
+                        });
 
-                    } catch (Exception e) { e.printStackTrace(); }
+                    } catch (Exception e) {
+                        runOnUiThread(() -> {
+                            adapter.clear();
+                            adapter.notifyDataSetChanged();
+                        });
+                    }
                 }
             });
-
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) {
+            runOnUiThread(() -> Toast.makeText(this, "Erro ao montar requisição de sugestões", Toast.LENGTH_SHORT).show());
+        }
     }
 
-    // ======= BUSCAR ENDEREÇO FIXO E ABRIR PASSENGER =======
     private void buscarEnderecoEIr(String endereco) {
         try {
-            String url = "https://nominatim.openstreetmap.org/search?q="
-                    + URLEncoder.encode(endereco, "UTF-8")
-                    + "&format=json&addressdetails=1&limit=1";
-
-            Request request = new Request.Builder()
+            String q = URLEncoder.encode(endereco, "UTF-8");
+            String url = "https://nominatim.openstreetmap.org/search?q=" + q + "&format=json&limit=1";
+            Request req = new Request.Builder()
                     .url(url)
-                    .header("User-Agent", "AcessApp/1.0 (acessapp@gmail.com)")
+                    .header("User-Agent", "AcessApp/1.0 (contact@example.com)")
                     .build();
 
-            client.newCall(request).enqueue(new Callback() {
-                @Override
-                public void onFailure(Call call, IOException e) { e.printStackTrace(); }
+            client.newCall(req).enqueue(new Callback() {
+                @Override public void onFailure(Call call, IOException e) {
+                    runOnUiThread(() -> Toast.makeText(MainActivity.this, "Erro ao buscar endereço", Toast.LENGTH_SHORT).show());
+                }
 
-                @Override
-                public void onResponse(Call call, Response response) throws IOException {
-                    if (!response.isSuccessful() || response.body() == null) return;
-
-                    String json = response.body().string();
+                @Override public void onResponse(Call call, Response response) throws IOException {
+                    if (!response.isSuccessful() || response.body() == null) {
+                        runOnUiThread(() -> Toast.makeText(MainActivity.this, "Resposta inválida do Nominatim", Toast.LENGTH_SHORT).show());
+                        return;
+                    }
                     try {
-                        JSONArray array = new JSONArray(json);
-                        if (array.length() > 0) {
-                            JSONObject obj = array.getJSONObject(0);
-                            String nome = obj.getString("display_name");
-                            double lat = Double.parseDouble(obj.getString("lat"));
-                            double lon = Double.parseDouble(obj.getString("lon"));
-
-                            runOnUiThread(() -> abrirPassengerActivity(nome, lat, lon));
+                        String body = response.body().string();
+                        JSONArray arr = new JSONArray(body);
+                        if (arr.length() == 0) {
+                            runOnUiThread(() -> Toast.makeText(MainActivity.this, "Endereço não encontrado", Toast.LENGTH_SHORT).show());
+                            return;
                         }
+                        JSONObject o = arr.getJSONObject(0);
+                        String display = o.optString("display_name", endereco);
+                        double lat = 0.0;
+                        double lon = 0.0;
+                        try { lat = Double.parseDouble(o.optString("lat", "0")); } catch (Exception ignored) {}
+                        try { lon = Double.parseDouble(o.optString("lon", "0")); } catch (Exception ignored) {}
 
-                    } catch (Exception e) { e.printStackTrace(); }
+                        final double fLat = lat;
+                        final double fLon = lon;
+                        final String fDisplay = display;
+
+                        runOnUiThread(() -> abrirPassengerActivity(fDisplay, fLat, fLon));
+                    } catch (Exception e) {
+                        runOnUiThread(() -> Toast.makeText(MainActivity.this, "Erro ao processar resposta do Nominatim", Toast.LENGTH_SHORT).show());
+                    }
                 }
             });
-
-        } catch (Exception e) { e.printStackTrace(); }
-    }
-
-    // ======= ABRIR PASSENGER ACTIVITY =======
-    private void abrirPassengerActivity(int pos) {
-        abrirPassengerActivity(nomesEnderecos.get(pos), latitudes.get(pos), longitudes.get(pos));
+        } catch (Exception e) {
+            Toast.makeText(this, "Erro ao codificar endereço", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void abrirPassengerActivity(String nome, double lat, double lon) {
+        if (lat == 0.0 || lon == 0.0) {
+            Toast.makeText(this, "Coordenadas inválidas", Toast.LENGTH_SHORT).show();
+            return;
+        }
         Intent intent = new Intent(MainActivity.this, PassengerActivity.class);
         intent.putExtra("destinoNome", nome);
         intent.putExtra("destinoLat", lat);
         intent.putExtra("destinoLon", lon);
         startActivity(intent);
+    }
+
+    private void openInstagramProfile(String username) {
+        try {
+            Uri uri = Uri.parse("http://instagram.com/_u/" + username);
+            Intent likeIng = new Intent(Intent.ACTION_VIEW, uri);
+            likeIng.setPackage("com.instagram.android");
+            startActivity(likeIng);
+        } catch (ActivityNotFoundException e) {
+            try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://instagram.com/" + username))); }
+            catch (Exception ignored) { Toast.makeText(this, "Não foi possível abrir Instagram", Toast.LENGTH_SHORT).show(); }
+        }
+    }
+
+    private void openEmail(String toAddress, String subject, String body) {
+        try {
+            Intent intent = new Intent(Intent.ACTION_SENDTO);
+            intent.setData(Uri.parse("mailto:" + Uri.encode(toAddress)));
+            intent.putExtra(Intent.EXTRA_SUBJECT, subject);
+            intent.putExtra(Intent.EXTRA_TEXT, body);
+            startActivity(Intent.createChooser(intent, "Enviar email"));
+        } catch (Exception e) {
+            Toast.makeText(this, "Nenhum app de email encontrado", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void openWhatsApp(String phoneNumber, String text) {
+        try {
+            String encodedText = URLEncoder.encode(text, "UTF-8");
+            String url = "https://wa.me/" + phoneNumber + "?text=" + encodedText;
+            Intent i = new Intent(Intent.ACTION_VIEW);
+            i.setData(Uri.parse(url));
+            startActivity(i);
+        } catch (Exception e) {
+            try {
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+                intent.setData(Uri.parse("https://play.google.com/store/apps/details?id=com.whatsapp"));
+                startActivity(intent);
+            } catch (Exception ignored) {
+                Toast.makeText(this, "Não foi possível abrir WhatsApp", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 }
